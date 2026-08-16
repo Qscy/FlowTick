@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Volume2, Sun, Moon, Languages, Github } from 'lucide-vue-next'
+import { Volume2, Sun, Moon, Languages, Github, Timer, Music, Settings, X } from 'lucide-vue-next'
 import { useTimer } from './composables/useTimer'
 import { useStorage, MAX_SEQUENCES } from './composables/useStorage'
 import { useAudio } from './composables/useAudio'
@@ -41,10 +41,17 @@ const settings = ref<AppSettings>({
 const showEditor = ref(false)
 const editingSequence = ref<TimerSequence | null>(null)
 const activeTab = ref<'timers' | 'audio' | 'settings'>('timers')
+const showMobilePanel = ref(false)
+
+const tabItems = [
+  { key: 'timers' as const, icon: Timer },
+  { key: 'audio' as const, icon: Music },
+  { key: 'settings' as const, icon: Settings }
+]
 
 // --- Theme ---
 function applyTheme(theme: 'dark' | 'light'): void {
-  document.documentElement.dataset.theme = theme
+  document.documentElement.dataset.ftTheme = theme
 }
 
 function toggleTheme(): void {
@@ -162,14 +169,14 @@ onUnmounted(() => {
 <template>
   <div class="h-full flex flex-col bg-flow-dark">
     <!-- Header -->
-    <header class="flex items-center justify-between px-6 py-4 bg-flow-panel border-b border-flow-border shrink-0">
-      <div class="flex items-center gap-3">
-        <img src="/logo-icon.svg" alt="" class="w-6 h-6 text-flow-accent" />
-        <h1 class="text-xl font-bold text-flow-text tracking-tight">FlowTick</h1>
+    <header class="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-flow-panel border-b border-flow-border shrink-0">
+      <div class="flex items-center gap-2 md:gap-3">
+        <img src="/logo-icon.svg" alt="" class="w-5 h-5 md:w-6 md:h-6 text-flow-accent" />
+        <h1 class="text-lg md:text-xl font-bold text-flow-text tracking-tight">FlowTick</h1>
       </div>
-      <div class="flex items-center gap-2">
-        <!-- Volume -->
-        <div class="flex items-center gap-2 px-3 py-1.5 bg-flow-darker rounded-lg">
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <!-- Volume (desktop only) -->
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-flow-darker rounded-lg">
           <Volume2 class="w-4 h-4 text-flow-text-dim" />
           <span class="text-xs text-flow-text-dim tabular-nums">{{ Math.round(volume * 100) }}%</span>
         </div>
@@ -190,13 +197,13 @@ onUnmounted(() => {
           <Sun v-if="settings.theme === 'dark'" class="w-4 h-4 text-flow-text-dim" />
           <Moon v-else class="w-4 h-4 text-flow-text-dim" />
         </button>
-        <!-- GitHub -->
+        <!-- GitHub (desktop only) -->
         <a
           href="https://github.com/Qscy/FlowTick"
           target="_blank"
           rel="noopener noreferrer"
           title="GitHub"
-          class="p-2 hover:bg-flow-border rounded-lg transition-colors"
+          class="hidden md:inline-flex p-2 hover:bg-flow-border rounded-lg transition-colors"
         >
           <Github class="w-4 h-4 text-flow-text-dim" />
         </a>
@@ -204,9 +211,27 @@ onUnmounted(() => {
     </header>
 
     <!-- Main layout -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Sidebar -->
-      <div class="w-80 flex flex-col border-r border-flow-border bg-flow-darker shrink-0">
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <!-- Main content area -->
+      <main class="flex-1 flex items-center justify-center min-h-0">
+        <TimerDisplay
+          :sequence="timer.currentSequence.value"
+          :status="timer.status.value"
+          :remaining-time="timer.remainingTime.value"
+          :total-time="timer.totalTime.value"
+          :current-phase-index="timer.currentPhaseIndex.value"
+          :progress="timer.progress.value"
+          :loop-count="timer.loopCount.value"
+          @start="handleTimerStart"
+          @pause="timer.pause"
+          @resume="timer.resume"
+          @reset="timer.reset"
+          @skip="timer.skipPhase"
+        />
+      </main>
+
+      <!-- Sidebar (desktop) -->
+      <div class="hidden md:flex w-80 flex-col border-l border-flow-border bg-flow-darker shrink-0">
         <!-- Tab navigation -->
         <nav class="flex items-center p-2 gap-1">
           <button
@@ -243,32 +268,72 @@ onUnmounted(() => {
           />
         </div>
       </div>
-
-      <!-- Main content area -->
-      <main class="flex-1 flex items-center justify-center">
-        <TimerDisplay
-          :sequence="timer.currentSequence.value"
-          :status="timer.status.value"
-          :remaining-time="timer.remainingTime.value"
-          :total-time="timer.totalTime.value"
-          :current-phase-index="timer.currentPhaseIndex.value"
-          :progress="timer.progress.value"
-          :loop-count="timer.loopCount.value"
-          @start="handleTimerStart"
-          @pause="timer.pause"
-          @resume="timer.resume"
-          @reset="timer.reset"
-          @skip="timer.skipPhase"
-        />
-      </main>
     </div>
+
+    <!-- Bottom tab bar (mobile) -->
+    <nav class="md:hidden flex items-center bg-flow-panel border-t border-flow-border shrink-0 safe-bottom">
+      <button
+        v-for="tab in tabItems"
+        :key="tab.key"
+        @click="activeTab = tab.key; showMobilePanel = true"
+        class="flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors"
+        :class="activeTab === tab.key ? 'text-flow-accent' : 'text-flow-text-dim'"
+      >
+        <component :is="tab.icon" class="w-5 h-5" />
+        <span class="text-[10px]">{{ t(`tabs.${tab.key}`) }}</span>
+      </button>
+    </nav>
+
+    <!-- Mobile tab content (slide-up panel) -->
+    <Teleport to="body">
+      <Transition name="slide-up">
+        <div
+          v-if="showMobilePanel"
+          class="md:hidden fixed inset-x-0 bottom-0 z-40 bg-flow-darker border-t border-flow-border rounded-t-2xl shadow-2xl flex flex-col max-h-[70vh]"
+        >
+          <!-- Drag handle -->
+          <div class="flex items-center justify-center pt-3 pb-1 shrink-0">
+            <div class="w-10 h-1 rounded-full bg-flow-border" />
+          </div>
+          <!-- Close button -->
+          <button
+            @click="showMobilePanel = false"
+            class="absolute top-2 right-3 p-1.5 hover:bg-flow-border rounded-lg transition-colors"
+          >
+            <X class="w-4 h-4 text-flow-text-dim" />
+          </button>
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto p-4 pb-6 safe-bottom">
+            <TimerList
+              v-if="activeTab === 'timers'"
+              :sequences="sequences"
+              @start="handleStart"
+              @edit="handleEdit"
+              @delete="handleDelete"
+              @create="handleCreate"
+            />
+            <AudioUploader
+              v-else-if="activeTab === 'audio'"
+              :audios="userAudios"
+              @add="handleAudioAdd"
+              @delete="handleAudioDelete"
+            />
+            <SettingsPanel
+              v-else
+              :settings="settings"
+              @update="handleSettingsUpdate"
+            />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Editor modal -->
     <Teleport to="body">
       <Transition name="fade">
         <div
           v-if="showEditor"
-          class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 md:p-4"
           @click.self="closeEditor"
         >
           <TimerEditor
@@ -291,5 +356,19 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+}
+
+/* iPhone safe area padding */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

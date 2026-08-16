@@ -9,11 +9,9 @@ if (saved) {
   try {
     const parsed = JSON.parse(saved)
     if (parsed && (parsed.theme === 'dark' || parsed.theme === 'light')) {
-      document.documentElement.dataset.theme = parsed.theme
+      document.documentElement.dataset.ftTheme = parsed.theme
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
 }
 
 createApp(App).use(i18n).mount('#app')

@@ -108,10 +108,10 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-8 select-none">
+  <div class="flex flex-col items-center justify-center p-4 md:p-8 select-none">
     <!-- Circular progress ring -->
-    <div class="relative mb-8 timer-ring-container">
-      <svg width="280" height="280" class="-rotate-90">
+    <div class="relative mb-4 md:mb-8 timer-ring-container">
+      <svg width="280" height="280" class="-rotate-90 w-[200px] h-[200px] md:w-[280px] md:h-[280px]">
         <defs>
           <!-- Gradient for progress ring -->
           <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -160,7 +160,7 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
 
       <!-- Loop indicator dots around outer edge -->
       <div v-if="loopDots.length > 0" class="absolute inset-0 pointer-events-none">
-        <svg width="280" height="280" class="absolute inset-0">
+        <svg width="280" height="280" class="absolute inset-0 w-[200px] h-[200px] md:w-[280px] md:h-[280px]">
           <circle
             v-for="dot in loopDots"
             :key="'loop-dot-' + dot.index"
@@ -177,25 +177,25 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
       <!-- Center content -->
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <div
-          class="text-6xl font-bold text-flow-text tabular-nums tracking-wider transition-transform duration-150"
+          class="text-4xl md:text-6xl font-bold text-flow-text tabular-nums tracking-wider transition-transform duration-150"
           :class="{ 'scale-105': digitScale }"
         >
           {{ formatTime(remainingTime) }}
         </div>
-        <div class="text-sm text-flow-text-dim mt-2 truncate max-w-48">
+        <div class="text-xs md:text-sm text-flow-text-dim mt-1 md:mt-2 truncate max-w-32 md:max-w-48">
           {{ currentPhaseLabel }}
         </div>
-        <div class="text-xs text-flow-text-dim mt-1">
+        <div class="text-[10px] md:text-xs text-flow-text-dim mt-0.5 md:mt-1">
           {{ phaseInfo }}
         </div>
-        <div v-if="loopInfo" class="text-xs text-flow-accent mt-1 font-medium">
+        <div v-if="loopInfo" class="text-[10px] md:text-xs text-flow-accent mt-0.5 md:mt-1 font-medium">
           {{ loopInfo }}
         </div>
       </div>
     </div>
 
     <!-- Control buttons -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 md:gap-4">
       <button
         v-if="status !== 'idle'"
         @click="$emit('reset')"

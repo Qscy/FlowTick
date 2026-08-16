@@ -69,8 +69,8 @@ function totalDuration(seq: TimerSequence): number {
           </div>
         </div>
 
-        <!-- Action buttons (visible on hover) -->
-        <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <!-- Action buttons (always visible on mobile, hover on desktop) -->
+        <div class="flex items-center gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <button
             @click="$emit('start', seq)"
             class="p-2 bg-flow-accent hover:bg-flow-accent-light rounded-lg transition-colors"

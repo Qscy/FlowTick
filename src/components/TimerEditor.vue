@@ -131,7 +131,7 @@ function handleSave(): void {
 </script>
 
 <template>
-  <div class="bg-flow-panel rounded-2xl p-6 border border-flow-border w-full max-w-2xl">
+  <div class="bg-flow-panel rounded-2xl p-4 md:p-6 border border-flow-border w-full max-w-2xl max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-xl font-semibold text-flow-text">
@@ -176,14 +176,14 @@ function handleSave(): void {
         </span>
       </div>
 
-      <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
+      <div class="space-y-3 max-h-48 md:max-h-72 overflow-y-auto pr-1">
         <div
           v-for="(phase, index) in editing.phases"
           :key="phase.id"
           class="flex flex-wrap items-center gap-2 p-3 bg-flow-darker rounded-xl border border-flow-border"
         >
           <!-- Phase label -->
-          <div class="w-32 shrink-0">
+          <div class="w-full md:w-32 shrink-0">
             <input
               v-model="phase.label"
               type="text"

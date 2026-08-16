@@ -14,16 +14,31 @@
   --color-flow-danger: #ef4444;
 }
 
+/* Lock theme variables against browser extension overrides */
+:root {
+  --color-flow-dark: #0f172a !important;
+  --color-flow-darker: #020617 !important;
+  --color-flow-panel: #1e293b !important;
+  --color-flow-border: #334155 !important;
+  --color-flow-accent: #06b6d4 !important;
+  --color-flow-accent-light: #67e8f9 !important;
+  --color-flow-text: #e2e8f0 !important;
+  --color-flow-text-dim: #94a3b8 !important;
+  --color-flow-success: #22c55e !important;
+  --color-flow-warning: #f59e0b !important;
+  --color-flow-danger: #ef4444 !important;
+}
+
 /* Light theme overrides */
-[data-theme="light"] {
-  --color-flow-dark: #f8fafc;
-  --color-flow-darker: #f1f5f9;
-  --color-flow-panel: #ffffff;
-  --color-flow-border: #e2e8f0;
-  --color-flow-accent: #0891b2;
-  --color-flow-accent-light: #06b6d4;
-  --color-flow-text: #1e293b;
-  --color-flow-text-dim: #64748b;
+[data-ft-theme="light"] {
+  --color-flow-dark: #f8fafc !important;
+  --color-flow-darker: #f1f5f9 !important;
+  --color-flow-panel: #ffffff !important;
+  --color-flow-border: #e2e8f0 !important;
+  --color-flow-accent: #0891b2 !important;
+  --color-flow-accent-light: #06b6d4 !important;
+  --color-flow-text: #1e293b !important;
+  --color-flow-text-dim: #64748b !important;
 }
 
 html, body, #app {
