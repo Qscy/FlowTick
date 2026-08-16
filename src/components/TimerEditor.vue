@@ -41,7 +41,7 @@ function isUserAudio(sound: string): boolean {
   return !BUILT_IN_VALUES.has(sound)
 }
 
-function previewSound(sound: string): void {
+function previewSound(sound: string | undefined): void {
   if (!sound || sound === 'none') return
   playSound(sound, props.userAudios, { phaseDuration: 1 }).catch(() => {})
 }
