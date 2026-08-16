@@ -34,6 +34,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "dist/*"
-          target: "/opt/frontend/flowtick"
+          target: "/opt/safeline/resources/nginx/static/static_1"
           strip_components: 1
           overwrite: true
+          debug: true
