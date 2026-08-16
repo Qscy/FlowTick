@@ -3,7 +3,7 @@ import type { TimerPhase, TimerSequence, TimerStatus, UserAudio } from '../types
 import { useAudio } from './useAudio'
 
 export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
-  const { playSound, playReminder, stopSound } = useAudio()
+  const { playSound, playEndSound, playReminder, stopSound } = useAudio()
 
   // --- Reactive state ---
   const status = ref<TimerStatus>('idle')
@@ -158,9 +158,8 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
         finish()
         // Play endSound after sequence completes
         if (finishedPhase?.endSound && finishedPhase.endSound !== 'none') {
-          stopSound()
-          playSound(finishedPhase.endSound, userAudiosRef.value).catch(
-            (e) => console.warn('[FlowTick] playSound error:', e)
+          playEndSound(finishedPhase.endSound, userAudiosRef.value).catch(
+            (e) => console.warn('[FlowTick] playEndSound error:', e)
           )
         }
       }
@@ -170,8 +169,8 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
     // Stop current background music before playing end notification
     stopSound()
     if (finishedPhase?.endSound && finishedPhase.endSound !== 'none') {
-      playSound(finishedPhase.endSound, userAudiosRef.value).catch(
-        (e) => console.warn('[FlowTick] playSound error:', e)
+      playEndSound(finishedPhase.endSound, userAudiosRef.value).catch(
+        (e) => console.warn('[FlowTick] playEndSound error:', e)
       )
     }
 

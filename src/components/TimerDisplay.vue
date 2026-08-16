@@ -108,10 +108,10 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center p-4 md:p-8 select-none">
+  <div class="flex flex-col items-center justify-center p-2 pb-0 md:p-8 select-none">
     <!-- Circular progress ring -->
-    <div class="relative mb-4 md:mb-8 timer-ring-container">
-      <svg width="280" height="280" class="-rotate-90 w-[200px] h-[200px] md:w-[280px] md:h-[280px]">
+    <div class="relative mb-2 md:mb-8 timer-ring-container">
+      <svg viewBox="0 0 280 280" class="-rotate-90 w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px]">
         <defs>
           <!-- Gradient for progress ring -->
           <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -160,7 +160,7 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
 
       <!-- Loop indicator dots around outer edge -->
       <div v-if="loopDots.length > 0" class="absolute inset-0 pointer-events-none">
-        <svg width="280" height="280" class="absolute inset-0 w-[200px] h-[200px] md:w-[280px] md:h-[280px]">
+        <svg viewBox="0 0 280 280" class="absolute inset-0 w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] md:w-[280px] md:h-[280px]">
           <circle
             v-for="dot in loopDots"
             :key="'loop-dot-' + dot.index"
@@ -177,50 +177,50 @@ function polarToCartesian(angle: number, radius: number): { x: number; y: number
       <!-- Center content -->
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <div
-          class="text-4xl md:text-6xl font-bold text-flow-text tabular-nums tracking-wider transition-transform duration-150"
+          class="text-3xl sm:text-4xl md:text-6xl font-bold text-flow-text tabular-nums tracking-wider transition-transform duration-150"
           :class="{ 'scale-105': digitScale }"
         >
           {{ formatTime(remainingTime) }}
         </div>
-        <div class="text-xs md:text-sm text-flow-text-dim mt-1 md:mt-2 truncate max-w-32 md:max-w-48">
+        <div class="text-[10px] sm:text-xs md:text-sm text-flow-text-dim mt-0.5 md:mt-2 truncate max-w-28 sm:max-w-32 md:max-w-48">
           {{ currentPhaseLabel }}
         </div>
-        <div class="text-[10px] md:text-xs text-flow-text-dim mt-0.5 md:mt-1">
+        <div class="text-[9px] sm:text-[10px] md:text-xs text-flow-text-dim mt-0.5 md:mt-1">
           {{ phaseInfo }}
         </div>
-        <div v-if="loopInfo" class="text-[10px] md:text-xs text-flow-accent mt-0.5 md:mt-1 font-medium">
+        <div v-if="loopInfo" class="text-[9px] sm:text-[10px] md:text-xs text-flow-accent mt-0.5 md:mt-1 font-medium">
           {{ loopInfo }}
         </div>
       </div>
     </div>
 
     <!-- Control buttons -->
-    <div class="flex items-center gap-3 md:gap-4">
+    <div class="flex items-center gap-2.5 sm:gap-3 md:gap-4">
       <button
         v-if="status !== 'idle'"
         @click="$emit('reset')"
-        class="flex items-center justify-center w-12 h-12 rounded-full bg-flow-panel hover:bg-flow-border transition-colors"
+        class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-flow-panel hover:bg-flow-border transition-colors"
         :title="t('display.reset')"
       >
-        <RotateCcw class="w-5 h-5 text-flow-text" />
+        <RotateCcw class="w-4 h-4 sm:w-5 sm:h-5 text-flow-text" />
       </button>
 
       <button
         @click="handleToggle"
         :title="status === 'running' ? t('display.pause') : status === 'paused' ? t('display.resume') : t('display.start')"
-        class="flex items-center justify-center w-16 h-16 rounded-full bg-flow-accent hover:bg-flow-accent-light transition-colors shadow-lg shadow-flow-accent/20"
+        class="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-flow-accent hover:bg-flow-accent-light transition-colors shadow-lg shadow-flow-accent/20"
       >
-        <Play v-if="status !== 'running'" class="w-8 h-8 text-flow-darker ml-1" />
-        <Pause v-else class="w-8 h-8 text-flow-darker" />
+        <Play v-if="status !== 'running'" class="w-7 h-7 sm:w-8 sm:h-8 text-flow-darker ml-1" />
+        <Pause v-else class="w-7 h-7 sm:w-8 sm:h-8 text-flow-darker" />
       </button>
 
       <button
         v-if="status !== 'idle'"
         @click="$emit('skip')"
-        class="flex items-center justify-center w-12 h-12 rounded-full bg-flow-panel hover:bg-flow-border transition-colors"
+        class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-flow-panel hover:bg-flow-border transition-colors"
         :title="t('display.skip')"
       >
-        <SkipForward class="w-5 h-5 text-flow-text" />
+        <SkipForward class="w-4 h-4 sm:w-5 sm:h-5 text-flow-text" />
       </button>
     </div>
 

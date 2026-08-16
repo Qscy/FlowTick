@@ -11,6 +11,13 @@ let polySynth: Tone.PolySynth | null = null
 let metalSynth: Tone.MetalSynth | null = null
 let membraneSynth: Tone.MembraneSynth | null = null
 let activePlayer: Tone.Player | null = null
+let endPlayer: Tone.Player | null = null
+
+// Dedicated synths for end sounds (never interrupted by stopSound)
+let endSynth: Tone.Synth | null = null
+let endPolySynth: Tone.PolySynth | null = null
+let endMetalSynth: Tone.MetalSynth | null = null
+let endMembraneSynth: Tone.MembraneSynth | null = null
 
 function ensureSynths(): void {
   if (synth) return
@@ -34,6 +41,32 @@ function ensureSynths(): void {
   }).toDestination()
 
   membraneSynth = new Tone.MembraneSynth({
+    pitchDecay: 0.05,
+    octaves: 8,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
+  }).toDestination()
+
+  // End sound synths — independent from background music synths
+  endSynth = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 }
+  }).toDestination()
+
+  endPolySynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+  }).toDestination()
+
+  endMetalSynth = new Tone.MetalSynth({
+    envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+    harmonicity: 5.1,
+    modulationIndex: 32,
+    resonance: 4000,
+    octaves: 1.5
+  }).toDestination()
+
+  endMembraneSynth = new Tone.MembraneSynth({
     pitchDecay: 0.05,
     octaves: 8,
     oscillator: { type: 'sine' },
@@ -150,6 +183,66 @@ export function useAudio() {
     metalSynth?.triggerAttackRelease('C4', '16n')
   }
 
+  async function playEndSound(
+    sound: BuiltInSound | string,
+    userAudios: UserAudio[] = []
+  ): Promise<void> {
+    await Tone.start()
+    ensureSynths()
+    applyVolume()
+
+    if (sound === 'none') return
+
+    // Dispose previous end sound player if still active
+    if (endPlayer) {
+      endPlayer.stop()
+      endPlayer.dispose()
+      endPlayer = null
+    }
+
+    const userAudio = userAudios.find((ua) => ua.id === sound)
+    if (userAudio) {
+      try {
+        const buffer = await Tone.Buffer.fromUrl(userAudio.url)
+        endPlayer = new Tone.Player(buffer).toDestination()
+        applyVolume()
+        endPlayer.start()
+      } catch (e) {
+        console.warn('[FlowTick] Failed to play end sound audio:', e)
+        if (endPlayer) {
+          endPlayer.dispose()
+          endPlayer = null
+        }
+      }
+      return
+    }
+
+    playBuiltInEndSound(sound as BuiltInSound)
+  }
+
+  function playBuiltInEndSound(sound: BuiltInSound): void {
+    switch (sound) {
+      case 'beep':
+        endSynth?.triggerAttackRelease('C5', '8n')
+        break
+      case 'chime':
+        endPolySynth?.triggerAttackRelease(['C5', 'E5', 'G5'], '4n')
+        break
+      case 'buzzer':
+        endSynth?.triggerAttackRelease('A3', '4n')
+        break
+      case 'tick':
+        endMetalSynth?.triggerAttackRelease('C4', '32n')
+        break
+      case 'bell':
+        endPolySynth?.triggerAttackRelease(['C6', 'E6'], '2n')
+        break
+      case 'digital':
+        endMembraneSynth?.triggerAttackRelease('C2', '16n')
+        break
+    }
+  }
+
   function stopSound(): void {
     if (activePlayer) {
       activePlayer.stop()
@@ -166,6 +259,7 @@ export function useAudio() {
     volume,
     setVolume,
     playSound,
+    playEndSound,
     playReminder,
     stopSound
   }
