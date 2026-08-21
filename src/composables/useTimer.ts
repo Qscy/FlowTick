@@ -3,7 +3,7 @@ import type { TimerPhase, TimerSequence, TimerStatus, UserAudio } from '../types
 import { useAudio } from './useAudio'
 
 export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
-  const { playSound, playEndSound, playReminder, stopSound } = useAudio()
+  const { playSound, playEndSound, playReminderSound, stopSound } = useAudio()
 
   // --- Reactive state ---
   const status = ref<TimerStatus>('idle')
@@ -17,6 +17,7 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
   // --- Internal non-reactive state ---
   let intervalId: ReturnType<typeof setInterval> | null = null
   let reminderCooldown = false
+  let wakeLock: WakeLockSentinel | null = null
 
   // --- Computed ---
   const progress = computed(() => {
@@ -29,6 +30,36 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
     if (!seq || currentPhaseIndex.value >= seq.phases.length) return null
     return seq.phases[currentPhaseIndex.value]
   })
+
+  // --- Wake Lock ---
+
+  async function requestWakeLock(): Promise<void> {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen')
+      }
+    } catch (err) {
+      console.warn('[FlowTick] Wake Lock request failed:', err)
+    }
+  }
+
+  function releaseWakeLock(): void {
+    if (wakeLock) {
+      wakeLock.release().catch((err) => {
+        console.warn('[FlowTick] Wake Lock release failed:', err)
+      })
+      wakeLock = null
+    }
+  }
+
+  // Re-acquire wake lock when page becomes visible again
+  function handleVisibilityChange(): void {
+    if (document.visibilityState === 'visible' && status.value === 'running') {
+      requestWakeLock()
+    }
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 
   // --- Timer control ---
 
@@ -44,6 +75,7 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
     loopCount.value = 1
     loadPhase(seq.phases[0])
     status.value = 'running'
+    requestWakeLock()
     beginTicking()
   }
 
@@ -51,11 +83,13 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
     if (status.value !== 'running') return
     status.value = 'paused'
     cleanup()
+    releaseWakeLock()
   }
 
   function resume(): void {
     if (status.value !== 'paused') return
     status.value = 'running'
+    requestWakeLock()
     beginTicking()
   }
 
@@ -67,6 +101,7 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
     remainingTime.value = 0
     totalTime.value = 0
     isReminderPlaying.value = false
+    releaseWakeLock()
   }
 
   /** Load a sequence without starting the timer (e.g. restore last session) */
@@ -104,7 +139,7 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
   }
 
   function beginTicking(): void {
-    cleanup()
+    // Interval is already cleared by caller (start→cleanup, resume→pause→cleanup)
     intervalId = setInterval(tick, 1000)
   }
 
@@ -125,7 +160,7 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
       if (!reminderCooldown && phase.reminderSound && phase.reminderSound !== 'none') {
         reminderCooldown = true
         isReminderPlaying.value = true
-        playSound(phase.reminderSound, userAudiosRef.value, { phaseDuration: 1 }).catch(
+        playReminderSound(phase.reminderSound, userAudiosRef.value).catch(
           (e) => console.warn('[FlowTick] playReminder error:', e)
         )
         setTimeout(() => {
@@ -150,6 +185,13 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
 
     if (nextIndex >= seq.phases.length) {
       if (seq.loop) {
+        // Stop current sound and play end sound before looping
+        stopSound()
+        if (finishedPhase?.endSound && finishedPhase.endSound !== 'none') {
+          playEndSound(finishedPhase.endSound, userAudiosRef.value).catch(
+            (e) => console.warn('[FlowTick] playEndSound error:', e)
+          )
+        }
         loopCount.value += 1
         currentPhaseIndex.value = 0
         loadPhase(seq.phases[0])
@@ -181,10 +223,15 @@ export function useTimer(userAudiosRef: Ref<UserAudio[]>) {
   function finish(): void {
     cleanup()
     status.value = 'completed'
+    releaseWakeLock()
   }
 
   // Clean up timer on component unmount
-  onUnmounted(cleanup)
+  onUnmounted(() => {
+    cleanup()
+    releaseWakeLock()
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  })
 
   return {
     status,

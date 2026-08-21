@@ -75,13 +75,15 @@ onMounted(async () => {
   setVolume(settings.value.defaultVolume)
   applyTheme(settings.value.theme)
 
-  // Restore last used sequence
+  // Restore last used sequence, or load the only sequence if there's just one
   const lastId = loadLastSequenceId()
   if (lastId) {
     const lastSeq = sequences.value.find((s) => s.id === lastId)
     if (lastSeq && lastSeq.phases.length > 0) {
       timer.loadSequence(lastSeq)
     }
+  } else if (sequences.value.length === 1 && sequences.value[0].phases.length > 0) {
+    timer.loadSequence(sequences.value[0])
   }
 
   const audios = await loadUserAudios()
@@ -103,6 +105,10 @@ function handleSave(sequence: TimerSequence): void {
 function handleDelete(id: string): void {
   sequences.value = sequences.value.filter((s) => s.id !== id)
   saveSequences(sequences.value)
+}
+
+function handleLoad(sequence: TimerSequence): void {
+  timer.loadSequence(sequence)
 }
 
 // --- Timer control ---
@@ -254,6 +260,7 @@ onUnmounted(() => {
             @edit="handleEdit"
             @delete="handleDelete"
             @create="handleCreate"
+            @load="handleLoad"
           />
           <AudioUploader
             v-else-if="activeTab === 'audio'"
@@ -311,6 +318,7 @@ onUnmounted(() => {
               @edit="handleEdit"
               @delete="handleDelete"
               @create="handleCreate"
+              @load="handleLoad"
             />
             <AudioUploader
               v-else-if="activeTab === 'audio'"

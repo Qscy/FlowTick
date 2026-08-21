@@ -15,6 +15,7 @@ defineEmits<{
   edit: [sequence: TimerSequence]
   delete: [id: string]
   create: []
+  load: [sequence: TimerSequence]
 }>()
 
 function totalDuration(seq: TimerSequence): number {
@@ -51,7 +52,8 @@ function totalDuration(seq: TimerSequence): number {
       <div
         v-for="seq in sequences"
         :key="seq.id"
-        class="group flex items-center gap-4 p-4 bg-flow-panel hover:bg-flow-border/50 rounded-xl border border-flow-border transition-colors"
+        @click="$emit('load', seq)"
+        class="group flex items-center gap-4 p-4 bg-flow-panel hover:bg-flow-border/50 rounded-xl border border-flow-border transition-colors cursor-pointer"
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
@@ -72,21 +74,21 @@ function totalDuration(seq: TimerSequence): number {
         <!-- Action buttons (always visible on mobile, hover on desktop) -->
         <div class="flex items-center gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <button
-            @click="$emit('start', seq)"
+            @click.stop="$emit('start', seq)"
             class="p-2 bg-flow-accent hover:bg-flow-accent-light rounded-lg transition-colors"
             :title="t('timerList.start')"
           >
             <Play class="w-4 h-4 text-flow-darker" />
           </button>
           <button
-            @click="$emit('edit', seq)"
+            @click.stop="$emit('edit', seq)"
             class="p-2 hover:bg-flow-border rounded-lg transition-colors"
             :title="t('timerList.edit')"
           >
             <Edit class="w-4 h-4 text-flow-text" />
           </button>
           <button
-            @click="$emit('delete', seq.id)"
+            @click.stop="$emit('delete', seq.id)"
             class="p-2 hover:bg-flow-border rounded-lg transition-colors"
             :title="t('timerList.delete')"
           >

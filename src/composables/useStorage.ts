@@ -16,6 +16,25 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 const VALID_SOUNDS: BuiltInSound[] = ['beep', 'chime', 'buzzer', 'tick', 'bell', 'digital', 'none']
 
+// Migrate legacy jsfxr preset names to current Tone.js built-in names
+const LEGACY_SOUND_MAP: Record<string, BuiltInSound> = {
+  tone: 'beep',
+  pickupCoin: 'chime',
+  laserShoot: 'tick',
+  explosion: 'buzzer',
+  powerUp: 'bell',
+  hitHurt: 'buzzer',
+  jump: 'digital',
+  blipSelect: 'tick',
+  synth: 'digital',
+  click: 'tick'
+}
+
+function migrateSound(name: string): string {
+  if (VALID_SOUNDS.includes(name as BuiltInSound)) return name
+  return LEGACY_SOUND_MAP[name] ?? 'beep'
+}
+
 // --- Sanitize parsed JSON to prevent prototype pollution ---
 
 function sanitizeKeys(obj: unknown): unknown {
@@ -108,8 +127,10 @@ export function useStorage() {
       return parsed.filter(isValidSequence).map((s) => {
         const seq = s as TimerSequence
         seq.phases.forEach((p) => {
-          if (!p.endSound) p.endSound = 'beep'
+          p.sound = migrateSound(p.sound)
+          p.endSound = migrateSound(p.endSound || 'beep')
           if (p.reminderSound === undefined) p.reminderSound = 'none'
+          else p.reminderSound = migrateSound(p.reminderSound)
         })
         return seq
       }).slice(0, MAX_SEQUENCES)
@@ -132,7 +153,11 @@ export function useStorage() {
     try {
       const data = localStorage.getItem(SETTINGS_KEY)
       if (!data) return { ...DEFAULT_SETTINGS }
-      const parsed = sanitizeKeys(JSON.parse(data))
+      const parsed = sanitizeKeys(JSON.parse(data)) as Record<string, unknown>
+      // Migrate legacy sound name before validation
+      if (typeof parsed.defaultSound === 'string') {
+        parsed.defaultSound = migrateSound(parsed.defaultSound)
+      }
       return isValidSettings(parsed) ? parsed as AppSettings : { ...DEFAULT_SETTINGS }
     } catch {
       return { ...DEFAULT_SETTINGS }
